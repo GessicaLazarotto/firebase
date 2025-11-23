@@ -1,24 +1,24 @@
 import React from 'react';
 import { signInWithPopup } from 'firebase/auth';
-import { auth, googleProvider } from './firebase';
+import { autenticacao, provedorGoogle } from './firebase';
 import { useNavigate } from 'react-router-dom';
 
 function Login() {
-  const navigate = useNavigate();
+  const navegar = useNavigate();
 
-  const login = async () => {
+  const fazerLogin = async () => {
     try {
-      await signInWithPopup(auth, googleProvider);
-      navigate('/filmes');
-    } catch (error) {
-      alert('Erro: ' + error.message);
+      await signInWithPopup(autenticacao, provedorGoogle);
+      navegar('/filmes');
+    } catch (erro) {
+      alert('Erro ao fazer login: ' + erro.message);
     }
   };
 
   return (
     <div style={{ textAlign: 'center', marginTop: '100px' }}>
       <h1>Filmes e Séries</h1>
-      <button onClick={login} style={{ padding: '10px 20px', fontSize: '16px' }}>
+      <button onClick={fazerLogin} style={{ padding: '10px 20px', fontSize: '16px' }}>
         Entrar com Google
       </button>
     </div>

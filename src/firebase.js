@@ -2,7 +2,7 @@ import { initializeApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 
-const firebaseConfig = {
+const configFirebase = {
   apiKey: "AIzaSyC3Vb4AignmfNEZLVfc7Jd9zGhQ95JztdE",
   authDomain: "lista-de-filmes-assistidos.firebaseapp.com",
   projectId: "lista-de-filmes-assistidos",
@@ -11,9 +11,9 @@ const firebaseConfig = {
   appId: "1:698336944150:web:5c1a72b449273885dd1537"
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
-const googleProvider = new GoogleAuthProvider();
+const aplicativo = initializeApp(configFirebase);
+const bancoDados = getFirestore(aplicativo);
+const autenticacao = getAuth(aplicativo);
+const provedorGoogle = new GoogleAuthProvider();
 
-export { db, auth, googleProvider };
+export { bancoDados, autenticacao, provedorGoogle };

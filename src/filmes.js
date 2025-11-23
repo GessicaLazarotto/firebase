@@ -1,33 +1,34 @@
 import React, { useState, useEffect } from 'react';
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where } from 'firebase/firestore';
-import { db, auth } from './firebase';
+import { bancoDados, autenticacao } from './firebase';
 import { signOut, onAuthStateChanged } from 'firebase/auth';
 import { useNavigate } from 'react-router-dom';
+import TextoVoz from './TextoVoz';
 
 function Filmes() {
   const [titulo, setTitulo] = useState('');
   const [tipo, setTipo] = useState('filme');
   const [lista, setLista] = useState([]);
   const [editandoId, setEditandoId] = useState(null);
-  const [user, setUser] = useState(null);
-  const navigate = useNavigate();
+  const [usuario, setUsuario] = useState(null);
+  const navegar = useNavigate();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (u) => {
+    const cancelarInscricao = onAuthStateChanged(autenticacao, (u) => {
       if (u) {
-        setUser(u);
+        setUsuario(u);
         carregarDados(u.uid);
       } else {
-        navigate('/');
+        navegar('/');
       }
     });
-    return () => unsubscribe();
-  }, [navigate]);
+    return () => cancelarInscricao();
+  }, [navegar]);
 
-  const carregarDados = async (userId) => {
-    const q = query(collection(db, 'filmes'), where('userId', '==', userId));
-    const snapshot = await getDocs(q);
-    setLista(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+  const carregarDados = async (idUsuario) => {
+    const consulta = query(collection(bancoDados, 'filmes'), where('userId', '==', idUsuario));
+    const instantaneo = await getDocs(consulta);
+    setLista(instantaneo.docs.map(documento => ({ id: documento.id, ...documento.data() })));
   };
 
   const salvar = async (e) => {
@@ -35,21 +36,21 @@ function Filmes() {
     if (!titulo) return alert('Digite o título');
     
     if (editandoId) {
-      await updateDoc(doc(db, 'filmes', editandoId), { titulo, tipo });
+      await updateDoc(doc(bancoDados, 'filmes', editandoId), { titulo, tipo });
     } else {
-      await addDoc(collection(db, 'filmes'), { titulo, tipo, userId: user.uid });
+      await addDoc(collection(bancoDados, 'filmes'), { titulo, tipo, userId: usuario.uid });
     }
     
     setTitulo('');
     setTipo('filme');
     setEditandoId(null);
-    carregarDados(user.uid);
+    carregarDados(usuario.uid);
   };
 
   const apagar = async (id) => {
-    if (!window.confirm('Apagar?')) return;
-    await deleteDoc(doc(db, 'filmes', id));
-    carregarDados(user.uid);
+    if (!window.confirm('Deseja apagar?')) return;
+    await deleteDoc(doc(bancoDados, 'filmes', id));
+    carregarDados(usuario.uid);
   };
 
   const editar = (item) => {
@@ -58,28 +59,35 @@ function Filmes() {
     setEditandoId(item.id);
   };
 
-  const sair = async () => {
-    await signOut(auth);
-    navigate('/');
+  const aoReceberTranscricao = (texto) => {
+    setTitulo(texto);
   };
 
-  if (!user) return <p>Carregando...</p>;
+  const sair = async () => {
+    await signOut(autenticacao);
+    navegar('/');
+  };
+
+  if (!usuario) return <p>Carregando...</p>;
 
   return (
-    <div style={{ maxWidth: '600px', margin: '20px auto', padding: '20px' }}>
+    <div style={{ maxWidth: '800px', margin: '20px auto', padding: '20px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
         <h1>Filmes e Séries</h1>
         <button onClick={sair}>Sair</button>
       </div>
       
       <form onSubmit={salvar} style={{ marginBottom: '20px', border: '1px solid #ccc', padding: '15px' }}>
-        <input 
-          type="text" 
-          value={titulo}
-          onChange={e => setTitulo(e.target.value)}
-          placeholder="Título"
-          style={{ width: '100%', padding: '8px', marginBottom: '10px' }}
-        />
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
+          <input 
+            type="text" 
+            value={titulo}
+            onChange={e => setTitulo(e.target.value)}
+            placeholder="Título (ou clique no microfone)"
+            style={{ width: '100%', padding: '8px' }}
+          />
+          <TextoVoz aoTranscrever={aoReceberTranscricao} />
+        </div>
         
         <select value={tipo} onChange={e => setTipo(e.target.value)} style={{ padding: '8px', marginRight: '10px' }}>
           <option value="filme">Filme</option>
@@ -95,10 +103,10 @@ function Filmes() {
         )}
       </form>
 
-      <h2>Lista ({lista.length})</h2>
+      <h2>Minha Lista ({lista.length})</h2>
       
       {lista.length === 0 ? (
-        <p>Nenhum item</p>
+        <p>Nenhum item adicionado</p>
       ) : (
         <ul style={{ listStyle: 'none', padding: 0 }}>
           {lista.map(item => (
